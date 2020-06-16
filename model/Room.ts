@@ -3,55 +3,76 @@ import {
   RoomInfo,
   RoomMember,
   RoomMemberDictionary,
-  ROOM_EVENT_TYPE,
-  RoomEventResponse,
+  ROOM_MEMBER,
+  ROOM_RESPONSE,
 } from "./Room.d.ts";
 
 export class Room {
   public members: RoomMemberDictionary = {};
-  public name: string;
-  constructor(name: string) {
-    this.name = name;
-  }
+  constructor() {}
 
-  getRoomInfo(): RoomInfo {
+  private getRoomInfo(): RoomInfo {
     let users: string[] = [];
     for (let rid in this.members) {
       const member = this.members[rid];
       users.push(member.name);
     }
     return {
-      name: this.name,
-      users: users.sort(),
+      hasAtlas: users.includes(ROOM_MEMBER.ATLAS),
+      hasDragon: users.includes(ROOM_MEMBER.DRAGON),
     };
   }
 
-  private async broadcast(event: RoomEventResponse): Promise<void> {
+  private async broadcastRoomToGuests(): Promise<void> {
+    const event = {
+      type: ROOM_RESPONSE.ROOM,
+      room: this.getRoomInfo(),
+    };
     for (let rid in this.members) {
       const member = this.members[rid];
-      await member.socket.send(JSON.stringify(event));
+      if (member.name === ROOM_MEMBER.GUEST) {
+        await member.socket.send(JSON.stringify(event));
+      }
     }
   }
 
-  async join(name: string, socket: WebSocket): Promise<void> {
-    const member: RoomMember = { name, socket };
+  async connect(socket: WebSocket): Promise<void> {
+    const member: RoomMember = { name: ROOM_MEMBER.GUEST, socket };
     this.members[socket.conn.rid] = member;
-    const event: RoomEventResponse = {
-      type: ROOM_EVENT_TYPE.JOIN,
-      name,
+    const event = {
+      type: ROOM_RESPONSE.ROOM,
       room: this.getRoomInfo(),
     };
-    await this.broadcast(event);
+    socket.send(JSON.stringify(event));
   }
 
-  async leave(rid: number): Promise<void> {
+  async choose(rid: number, name: ROOM_MEMBER): Promise<void> {
+    const member = this.members[rid];
+    const room = this.getRoomInfo();
+    if (name === ROOM_MEMBER.GUEST) {
+      console.error(
+        `${member.name} attempted to change their name to ${ROOM_MEMBER.GUEST}.`,
+      );
+    } else if (
+      name === ROOM_MEMBER.ATLAS && room.hasAtlas ||
+      name === ROOM_MEMBER.DRAGON && room.hasDragon
+    ) {
+      console.error(`${name} is already taken.`);
+    } else {
+      member.name = name;
+      const nameEvent = { type: ROOM_RESPONSE.NAME, name };
+      await member.socket.send(JSON.stringify(nameEvent));
+      if (name !== ROOM_MEMBER.OBSERVER) {
+        await this.broadcastRoomToGuests();
+      }
+    }
+  }
+
+  async disconnect(rid: number): Promise<void> {
     const name = this.members[rid].name;
     delete this.members[rid];
-    const event: RoomEventResponse = {
-      type: ROOM_EVENT_TYPE.LEAVE,
-      name,
-      room: this.getRoomInfo(),
-    };
-    await this.broadcast(event);
+    if (name === ROOM_MEMBER.ATLAS || name === ROOM_MEMBER.DRAGON) {
+      await this.broadcastRoomToGuests();
+    }
   }
 }

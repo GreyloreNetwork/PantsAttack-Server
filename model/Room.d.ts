@@ -1,12 +1,19 @@
 import { WebSocket } from "https://deno.land/std/ws/mod.ts";
 
 export interface RoomInfo {
-  name: string;
-  users: string[];
+  hasAtlas: boolean;
+  hasDragon: boolean;
+}
+
+export const enum ROOM_MEMBER {
+  ATLAS = "Atlas",
+  DRAGON = "Dragon",
+  OBSERVER = "Observer",
+  GUEST = "Guest",
 }
 
 export interface RoomMember {
-  name: string;
+  name: ROOM_MEMBER;
   socket: WebSocket;
 }
 
@@ -14,17 +21,11 @@ export interface RoomMemberDictionary {
   [rid: number]: RoomMember;
 }
 
-export const enum ROOM_EVENT_TYPE {
-  JOIN = "Join",
-  LEAVE = "Leave",
+export const enum ROOM_REQUEST {
+  CHOOSE = "Choose",
 }
 
-export interface RoomEventRequest {
-  name: string;
-}
-
-export interface RoomEventResponse {
-  type: ROOM_EVENT_TYPE;
-  name: string;
-  room: RoomInfo;
+export const enum ROOM_RESPONSE {
+  ROOM = "Room",
+  NAME = "Name",
 }
