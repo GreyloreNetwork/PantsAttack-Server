@@ -1,12 +1,14 @@
 import { WebSocket } from "https://deno.land/std/ws/mod.ts";
-import { GAME_STATE, Round } from "../GameMaster/GameMaster.d.ts";
+import { GAME_STATE, Round, Turn, Board } from "../GameMaster/GameMaster.d.ts";
 
 export interface RoomInfo {
   hasAtlas: boolean;
   hasDragon: boolean;
   gameState: GAME_STATE;
+  board: Board;
   currentRound: Round | null;
   narration: string;
+  lastTurn: Turn | null;
 }
 
 export const enum ROOM_MEMBER {

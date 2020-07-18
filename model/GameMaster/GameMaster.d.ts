@@ -6,21 +6,38 @@ export const enum GAME_STATE {
   DONE = "Game Over",
 }
 
+export interface Board {
+  [ROOM_MEMBER.ATLAS]: Location;
+  [ROOM_MEMBER.DRAGON]: Location;
+}
+
 export interface Round {
   number: number;
   initiative: null | ROOM_MEMBER.ATLAS | ROOM_MEMBER.DRAGON;
   turns: Turn[];
 }
 
-export const enum TURN_ACTION {
-  SURRENDER = "Surrender",
-  PASS = "Pass",
-  CHIDE = "Chide",
-}
-
 export interface Turn {
   number: number;
   agent: ROOM_MEMBER.ATLAS | ROOM_MEMBER.DRAGON;
   action: TURN_ACTION | null;
-  data?: any;
+  data: null | string | Movement;
+}
+
+export const enum TURN_ACTION {
+  SURRENDER = "Surrender",
+  PASS = "Pass",
+  CHIDE = "Chide",
+  MOVE = "Move",
+}
+
+export interface Movement {
+  from: Location;
+  to: Location;
+}
+
+export interface Location {
+  x: number;
+  y: number;
+  z: number;
 }

@@ -7,7 +7,7 @@ import {
   ROOM_RESPONSE,
 } from "./Room.d.ts";
 import { GameMaster } from "../GameMaster/GameMaster.ts";
-import { TURN_ACTION } from "../GameMaster/GameMaster.d.ts";
+import { TURN_ACTION, Movement } from "../GameMaster/GameMaster.d.ts";
 
 export class Room {
   private members: RoomMemberDictionary = {};
@@ -28,8 +28,10 @@ export class Room {
       hasAtlas,
       hasDragon,
       gameState: this.GM.state,
+      board: this.GM.board,
       currentRound: this.GM.getCurrentRound(),
       narration: this.GM.getNarration(hasAtlas, hasDragon),
+      lastTurn: this.GM.getLastTurn()
     };
   }
 
@@ -118,10 +120,13 @@ export class Room {
           break;
         }
         case TURN_ACTION.CHIDE: {
-          if (typeof data === "string") {
-            const message: string = data;
-            isValidAction = this.GM.chide(agent, message);
-          }
+          const message = data as string;
+          isValidAction = this.GM.chide(agent, message);
+          break;
+        }
+        case TURN_ACTION.MOVE: {
+          const movement = data as Movement;
+          isValidAction = this.GM.move(agent, movement);
           break;
         }
         case TURN_ACTION.SURRENDER: {

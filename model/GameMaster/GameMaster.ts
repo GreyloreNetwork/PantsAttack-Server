@@ -1,10 +1,16 @@
-import { GAME_STATE, Round, Turn, TURN_ACTION } from "./GameMaster.d.ts";
+import { GAME_STATE, Board, Round, Turn, TURN_ACTION, Movement } from "./GameMaster.d.ts";
 import { ROOM_MEMBER } from "../Room/Room.d.ts";
 
 export class GameMaster {
   private rounds: Round[] = [];
   state: GAME_STATE = GAME_STATE.WAIT;
-  constructor() {}
+  board: Board;
+  constructor() {
+    this.board = {
+      [ROOM_MEMBER.ATLAS]: { x: -3, y: 0, z: 0 },
+      [ROOM_MEMBER.DRAGON]: { x: 3, y: 0, z: 0 },
+    };
+  }
 
   private narateTurn(turn: Turn): string {
     switch (turn.action) {
@@ -15,8 +21,11 @@ export class GameMaster {
         return `${turn.agent} Surrendered the Game`;
       }
       case TURN_ACTION.CHIDE: {
-        const insult: string = turn.data;
+        const insult = turn.data as string;
         return `${turn.agent} Chided: "${insult}"`;
+      }
+      case TURN_ACTION.MOVE: {
+        return `${turn.agent} Moved`;
       }
     }
     return "TURN ERROR";
@@ -24,12 +33,12 @@ export class GameMaster {
 
   private narateLastAction(round: Round): string {
     const turn = this.getCurrentTurn(round);
-    if (turn === null) {
+    if (round.number === 1 && turn !== null && turn.number === 1) {
+      return `${round.initiative} took first initiative`;
+    } else if (turn === null || turn.number === 1) {
       const lastRound = this.rounds[round.number - 2];
       const lastTurn = lastRound.turns[1];
       return this.narateTurn(lastTurn);
-    } else if (turn.number === 1) {
-      return `${round.initiative} took initiative`;
     } else {
       return this.narateTurn(round.turns[0]);
     }
@@ -67,6 +76,19 @@ export class GameMaster {
       }
     }
     return "ERROR";
+  }
+
+  getLastTurn(): Turn | null {
+    const turns = this.rounds
+      .map(round => round.turns)
+      .reduce((list, turns) => {
+        return [...list, ...turns];
+      }, []);
+    if (turns.length === 0) return null;
+    const currentTurn = turns[turns.length - 1];
+    if (currentTurn.action !== null) return currentTurn;
+    else if (turns.length === 1) return null;
+    else return turns[turns.length - 2];
   }
 
   getCurrentRound(): Round | null {
@@ -115,6 +137,7 @@ export class GameMaster {
       number: 1,
       agent,
       action: null,
+      data: null
     };
     round.turns.push(newTurn);
     return true;
@@ -132,6 +155,7 @@ export class GameMaster {
           ? ROOM_MEMBER.DRAGON
           : ROOM_MEMBER.ATLAS,
         action: null,
+        data: null
       };
       round.turns.push(newTurn);
     } else {
@@ -174,6 +198,29 @@ export class GameMaster {
     // TURN_ACTION.CHIDE
     turn.action = TURN_ACTION.CHIDE;
     turn.data = message;
+    this.setupNextTurn(round, turn, agent);
+    return true;
+  }
+
+  move(
+    agent: ROOM_MEMBER.ATLAS | ROOM_MEMBER.DRAGON,
+    move: Movement,
+  ): boolean {
+    // Check Round
+    const round = this.getCurrentRound();
+    if (round === null) return false;
+    // Check Turn
+    const turn = this.getCurrentTurn(round);
+    if (turn === null || turn.action !== null || turn.agent !== agent) {
+      return false;
+    }
+    // TODO: implement `isValidMove` function
+    // TURN_ACTION.MOVE
+    turn.action = TURN_ACTION.MOVE;
+    turn.data = move;
+    this.board[agent].x = move.to.x;
+    this.board[agent].y = move.to.y;
+    this.board[agent].z = move.to.z;
     this.setupNextTurn(round, turn, agent);
     return true;
   }
