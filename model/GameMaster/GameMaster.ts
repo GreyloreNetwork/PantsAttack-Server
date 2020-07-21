@@ -225,6 +225,25 @@ export class GameMaster {
     return true;
   }
 
+  attack(
+    agent: ROOM_MEMBER.ATLAS | ROOM_MEMBER.DRAGON,
+  ): boolean {
+    // Check Round
+    const round = this.getCurrentRound();
+    if (round === null) return false;
+    // Check Turn
+    const turn = this.getCurrentTurn(round);
+    if (turn === null || turn.action !== null || turn.agent !== agent) {
+      return false;
+    }
+    // TODO: add dice
+    // TURN_ACTION.ATTACK
+    turn.action = TURN_ACTION.ATTACK;
+    turn.data = Math.random() > 0.5;
+    this.setupNextTurn(round, turn, agent);
+    return true;
+  }
+
   surrender(agent: ROOM_MEMBER.ATLAS | ROOM_MEMBER.DRAGON): boolean {
     // Check Round
     const round = this.getCurrentRound();

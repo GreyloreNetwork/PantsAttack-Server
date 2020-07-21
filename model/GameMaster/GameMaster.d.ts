@@ -21,7 +21,7 @@ export interface Turn {
   number: number;
   agent: ROOM_MEMBER.ATLAS | ROOM_MEMBER.DRAGON;
   action: TURN_ACTION | null;
-  data: null | string | Movement;
+  data: null | boolean | string | Movement;
 }
 
 export const enum TURN_ACTION {

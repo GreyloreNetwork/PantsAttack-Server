@@ -129,6 +129,10 @@ export class Room {
           isValidAction = this.GM.move(agent, movement);
           break;
         }
+        case TURN_ACTION.ATTACK: {
+          isValidAction = this.GM.attack(agent);
+          break;
+        }
         case TURN_ACTION.SURRENDER: {
           isValidAction = this.GM.surrender(agent);
           break;
