@@ -29,6 +29,7 @@ export const enum TURN_ACTION {
   PASS = "Pass",
   CHIDE = "Chide",
   MOVE = "Move",
+  ATTACK = "Attack",
 }
 
 export interface Movement {
