@@ -27,6 +27,14 @@ export class GameMaster {
       case TURN_ACTION.MOVE: {
         return `${turn.agent} Moved`;
       }
+      case TURN_ACTION.ATTACK: {
+        const success = turn.data as boolean;
+        if (success) {
+          return `${turn.agent} Won!`;
+        } else {
+          return `${turn.agent} was Blocked`
+        }
+      }
     }
     return "TURN ERROR";
   }
@@ -239,8 +247,13 @@ export class GameMaster {
     // TODO: add dice
     // TURN_ACTION.ATTACK
     turn.action = TURN_ACTION.ATTACK;
-    turn.data = Math.random() > 0.5;
-    this.setupNextTurn(round, turn, agent);
+    const success = Math.random() > 0.5;
+    turn.data = success;
+    if (success) {
+      this.state = GAME_STATE.DONE;
+    } else {
+      this.setupNextTurn(round, turn, agent);
+    }
     return true;
   }
 
